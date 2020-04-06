@@ -13,6 +13,10 @@ import (
 	"github.com/kjk/notionapi"
 )
 
+var (
+	byPassPageCover bool
+)
+
 func maybePanic(format string, args ...interface{}) {
 	notionapi.MaybePanic(format, args...)
 }
@@ -59,10 +63,18 @@ func fileNameFromPageCoverURL(uri string) string {
 	return parts[lastIdx]
 }
 
+// ByPassPageCover when you do not want to check about the cover white list URL
+func ByPassPageCover(b bool) {
+	byPassPageCover = b
+}
+
 func FilePathFromPageCoverURL(uri string, block *notionapi.Block) string {
 	// TODO: not sure about this heuristic. Maybe turn it into a whitelist:
 	// if starts with notion.so or aws, then download and convert to local
 	// otherwise leave alone
+	if byPassPageCover {
+		return uri
+	}
 	if strings.HasPrefix(uri, "https://cdn.dutchcowboys.nl/uploads") {
 		return uri
 	}
