@@ -29,13 +29,14 @@ type LoadPageChunkResponse struct {
 
 // RecordMap contains a collections of blocks, a space, users, and collections.
 type RecordMap struct {
+	Activities      map[string]*Record `json:"activity"`
 	Blocks          map[string]*Record `json:"block"`
 	Spaces          map[string]*Record `json:"space"`
 	Users           map[string]*Record `json:"notion_user"`
 	Collections     map[string]*Record `json:"collection"`
 	CollectionViews map[string]*Record `json:"collection_view"`
-	Comments        map[string]*Record `josn:"comment"`
-	Discussions     map[string]*Record `jsoon:"discussion"`
+	Comments        map[string]*Record `json:"comment"`
+	Discussions     map[string]*Record `json:"discussion"`
 }
 
 // LoadPageChunk executes a raw API call /api/v3/loadPageChunk
@@ -62,13 +63,19 @@ func (c *Client) LoadPageChunk(pageID string, chunkNo int, cur *cursor) (*LoadPa
 	if rsp.RawJSON, err = doNotionAPI(c, apiURL, req, &rsp); err != nil {
 		return nil, err
 	}
-	if err = parseRecordMap(rsp.RecordMap); err != nil {
+	if err = ParseRecordMap(rsp.RecordMap); err != nil {
 		return nil, err
 	}
 	return &rsp, nil
 }
 
-func parseRecordMap(recordMap *RecordMap) error {
+func ParseRecordMap(recordMap *RecordMap) error {
+	for _, r := range recordMap.Activities {
+		if err := parseRecord(TableActivity, r); err != nil {
+			return err
+		}
+	}
+
 	for _, r := range recordMap.Blocks {
 		if err := parseRecord(TableBlock, r); err != nil {
 			return err

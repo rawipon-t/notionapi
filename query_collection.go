@@ -1,6 +1,8 @@
 package notionapi
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // AggregateQuery describes an aggregate query
 type AggregateQuery struct {
@@ -31,6 +33,12 @@ type QuerySort struct {
 	Type      string `json:"type"`
 }
 
+// Aggregator describes part of the quer
+type Aggregator struct {
+	Aggregator string `json:"aggregator"` // e.g. "count"
+	Property   string `json:"property"`   // e.g. "title"
+}
+
 // Query describes a query
 type Query struct {
 	Aggregate  []*AggregateQuery `json:"aggregate"`
@@ -42,14 +50,42 @@ type Query struct {
 	Sort           []*QuerySort   `json:"sort"`
 }
 
+type Query2FilterValue struct {
+	Type  string      `json:"type"`
+	Value interface{} `json:"value"` // can be string or number
+}
+
+type Query2FilterFilter struct {
+	Value    Query2FilterValue `json:"value"`
+	Operator string            `json:"operator"`
+}
+
+type Query2FilterElement struct {
+	Filter   Query2FilterFilter `json:"filter"`
+	Property string             `json:"property"`
+}
+
+type Query2Filter struct {
+	Filters  []Query2FilterElement `json:"filters"`
+	Operator string                `json:"operator"`
+}
+
+// Query2 describes a query
+type Query2 struct {
+	Filter       *Query2Filter     `json:"filter"`
+	Sort         []*QuerySort      `json:"sort"`
+	Aggregate    []*AggregateQuery `json:"aggregate"`
+	Aggregations []*Aggregator     `json:"aggregations"`
+}
+
 type loader struct {
 	Type  string `json:"type"`  // e.g. "table"
 	Limit int    `json:"limit"` // Notion uses 70 by default
 	// from User.TimeZone
 	UserTimeZone string `json:"userTimeZone"`
 	// from User.Locale
-	UserLocale       string `json:"userLocale"`
-	LoadContentCover bool   `json:"loadContentCover"`
+	//UserLocale       string `json:"userLocale"`
+	LoadContentCover bool `json:"loadContentCover"`
 }
 
 // /api/v3/queryCollection request
@@ -95,11 +131,14 @@ func (c *Client) QueryCollection(collectionID, collectionViewID string, q *Query
 		CollectionViewID: collectionViewID,
 		Query:            q,
 	}
+	timeZone := "America/Los_Angeles"
+	if user != nil {
+		timeZone = user.TimeZone
+	}
 	req.Loader = &loader{
 		Type:         "table",
 		Limit:        startLimit,
-		UserLocale:   user.Locale,
-		UserTimeZone: user.TimeZone,
+		UserTimeZone: timeZone,
 		// don't know what this is, Notion sets it to true
 		LoadContentCover: true,
 	}
@@ -123,7 +162,7 @@ func (c *Client) QueryCollection(collectionID, collectionViewID string, q *Query
 			return nil, fmt.Errorf("Client.QueryCollection() 2nd fetch failed: %s", err)
 		}
 	}
-	if err := parseRecordMap(rsp.RecordMap); err != nil {
+	if err := ParseRecordMap(rsp.RecordMap); err != nil {
 		return nil, err
 	}
 	return &rsp, nil

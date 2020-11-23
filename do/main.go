@@ -148,8 +148,7 @@ func main() {
 		flgExportPage string
 		flgExportType string
 		flgRecursive  bool
-		//flgVerbose    bool
-		flgTrace bool
+		flgTrace      bool
 
 		// if true, remove cache directories (data/log, data/cache)
 		flgCleanCache bool
@@ -204,7 +203,7 @@ func main() {
 	}
 
 	if false {
-		flgToHTML = "8511412cbfde432ba226648e9bdfbec2"
+		flgToHTML = "97c2435193d245688bb5da7f84edfe45"
 	}
 
 	if false {
